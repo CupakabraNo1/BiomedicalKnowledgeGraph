@@ -1,0 +1,15 @@
+services:
+  neo4j:
+    image: neo4j:5.10
+    container_name: neo4j-autoencoder
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/mySecurePassword123
+      # Without this Neo4j preallocates a 256MB transaction log per database
+      # (~512MB on disk for an empty graph). Logs now grow only as needed.
+      - NEO4J_db_tx__log_preallocate=false
+    volumes:
+      - ./data/neo4j:/data
+    restart: unless-stopped

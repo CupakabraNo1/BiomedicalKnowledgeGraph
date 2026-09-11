@@ -1,0 +1,9 @@
+neo4j
+networkx
+numpy
+scikit-learn
+tensorflow
+jupyter
+node2vec
+gensim
+matplotlib

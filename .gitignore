@@ -1,0 +1,17 @@
+# Data (large graphs/databases — not version controlled)
+data/raw/*
+data/processed/*
+data/neo4j/
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
