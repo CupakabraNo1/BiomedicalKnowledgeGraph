@@ -303,15 +303,16 @@ def load_graph():
 
 
 def load_splits():
-    """Rebuild everything step 2b produced, straight from data/processed."""
+    """Rebuild processed data straight from data/processed."""
     meta = json.loads(config.SPLIT_META_FILE.read_text(encoding="utf-8"))
     G, index = load_graph()
 
     if meta["n_nodes"] != G.number_of_nodes() or meta["n_edges"] != G.number_of_edges():
         raise RuntimeError(
-            f"[load_splits] splits were built on {meta['n_nodes']:,} nodes / "
-            f"{meta['n_edges']:,} edges but the files on disk hold "
-            f"{G.number_of_nodes():,} / {G.number_of_edges():,} -- rerun make_splits"
+            f"[load_splits] meta records {meta['n_nodes']:,} nodes / "
+            f"{meta['n_edges']:,} edges but nodes.csv + edges.npz hold "
+            f"{G.number_of_nodes():,} / {G.number_of_edges():,} -- the files in "
+            f"{config.PROCESSED_DATA} disagree"
         )
 
     with np.load(config.SPLIT_FILE) as npz:
