@@ -15,10 +15,12 @@ NODES_FILE           = PROCESSED_DATA / "nodes.csv"
 EDGES_FILE           = PROCESSED_DATA / "edges.npz"
 SPLIT_FILE           = PROCESSED_DATA / "splits.npz"
 SPLIT_META_FILE      = PROCESSED_DATA / "splits_meta.json"
+EMBEDDING_FILE       = PROCESSED_DATA / "embeddings.npy"
+EMBEDDING_META_FILE  = PROCESSED_DATA / "embeddings_meta.json"
 
 
 # load data
-NEO4J_BATCH_SIZE           = 20_000
+NEO4J_BATCH_SIZE     = 20_000
 TARGET_METAEDGE      = ("Disease", "associates", "Gene")
 SUPPORTING_METAEDGES = (
     ("Gene", "interacts", "Gene"),
@@ -36,3 +38,14 @@ NEGATIVE_SAMPLER          = "uniform"
 NEGATIVE_RATIO_TRAIN      = 1
 NEGATIVE_RATIO_VALIDATION = 10
 NEGATIVE_MAX_ROUNDS       = 20
+
+# embeddings
+EMB_DIM                   = 128
+NUM_WALKS                 = 10
+WALK_LENGTH               = 80
+WINDOW                    = 10
+P                         = 1.0
+Q                         = 1.0
+W2V_EPOCHS                = 10
+W2V_NEGATIVE              = 5
+W2V_WORKERS               = 8
