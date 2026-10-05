@@ -1,16 +1,17 @@
 # Data
 
-Files are **not version controlled** (see `.gitignore`) — download them locally.
+Files here are **not version controlled** (see `.gitignore`).
 
-| Dataset | Source | Role |
+| folder | contents | how it gets there |
 |---|---|---|
-| Hetionet | https://het.io | Ready-made biomedical graph (+ Neo4j version) |
-| OGB `ogbl-biokg` | https://ogb.stanford.edu | Link prediction benchmark (split + evaluator) |
-| DisGeNET | https://www.disgenet.org | Gene–disease associations |
-| STRING | https://string-db.org | Protein–protein interactions |
-| ClinVar (optional) | https://www.ncbi.nlm.nih.gov/clinvar | "Variant" nodes (DNA layer) |
+| `raw/` | `hetionet-v1.0.json.bz2` (+ `hetionet-v1.0-metagraph.json`) | download, see below |
+| `processed/` | `nodes.csv`, `edges.npz`, `splits.npz`, `splits_meta.json`, `embeddings.npy`, `embeddings_meta.json` | notebook section 1 |
+| `neo4j/` | Neo4j database files | `docker compose up -d` + notebook section 1.1 |
 
-- `raw/` — downloaded edge files / Neo4j export
-- `processed/` — edge lists, embeddings (`.npy`), splits
+Source: [Hetionet v1.0](https://het.io) — only `Disease–associates–Gene`,
+`Gene–interacts–Gene` and `Disease–resembles–Disease` edges are used.
 
-> Tip: start from a subgraph (a single edge type, e.g. gene–disease), not the whole graph.
+```bash
+curl -L -o data/raw/hetionet-v1.0.json.bz2 \
+  https://github.com/hetio/hetionet/raw/main/hetnet/json/hetionet-v1.0.json.bz2
+```

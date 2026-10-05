@@ -1,9 +1,11 @@
 neo4j
 networkx
 numpy
+scipy
+pandas
 scikit-learn
-tensorflow
-jupyter
-node2vec
 gensim
+tensorflow
 matplotlib
+jupyter
+rich

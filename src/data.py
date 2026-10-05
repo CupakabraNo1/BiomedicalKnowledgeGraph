@@ -1,6 +1,3 @@
-"""Hetionet subgraph: file -> networkx -> Neo4j, and back."""
-from __future__ import annotations
-
 import bz2
 import json
 import re
@@ -20,13 +17,12 @@ def get_driver():
 
 
 def selected_metaedges():
-    """The target metaedge plus its supporting structure, as configured."""
-    return {tuple(config.TARGET_METAEDGE),
-            *(tuple(m) for m in config.SUPPORTING_METAEDGES)}
+    """The edge types we keep: Disease-associates-Gene plus the supporting ones."""
+    return {config.TARGET_METAEDGE, *config.SUPPORTING_METAEDGES}
 
 
 def metaedge_of(edge):
-    """The (source kind, edge kind, target kind) triple identifying an edge's type."""
+    """Edge type as (source kind, edge kind, target kind)."""
     return (edge["source_id"][0], edge["kind"], edge["target_id"][0])
 
 
@@ -36,7 +32,7 @@ def reltype(kind):
 
 
 def scalar_props(data):
-    """Neo4j stores primitives and lists of primitives, nothing nested."""
+    """Keep only properties Neo4j can store (numbers, strings, bools and lists of them)."""
     def ok(value):
         return isinstance(value, (str, int, float, bool))
 
@@ -47,12 +43,11 @@ def scalar_props(data):
 
 
 def chunked(items, size):
+    """Split a list into batches of `size`."""
     it = iter(items)
     while batch := list(islice(it, size)):
         yield batch
 
-
-# --- file -> networkx ---------------------------------------------------------
 
 def create_nodes(G, nodes):
     for node in nodes:
@@ -68,7 +63,7 @@ def create_nodes(G, nodes):
 def create_edges(G, edges):
     for edge in edges:
         G.add_edge(
-            tuple(edge["source_id"]),          # [kind, id] -> (kind, id)
+            tuple(edge["source_id"]),
             tuple(edge["target_id"]),
             key=edge["kind"],
             kind=edge["kind"],
@@ -77,16 +72,18 @@ def create_edges(G, edges):
         )
 
 
-def load_hetionet(metaedges=None, *, write_to_db=True):
-    """Read the configured subgraph out of the Hetionet dump in data/raw/."""
-    metaedges = selected_metaedges() if metaedges is None else {tuple(m) for m in metaedges}
+def load_hetionet(write_to_db=True):
+    """Read our part of Hetionet from data/raw and (optionally) write it to Neo4j.
+
+    Only nodes touched by the kept edges are loaded, so the rest of Hetionet
+    does not come along as isolated nodes.
+    """
+    metaedges = selected_metaedges()
 
     with bz2.open(config.RAW_DATA / config.HETIONET_FILENAME, "rt", encoding="utf-8") as f:
         hetnet = json.load(f)
 
     edges = [e for e in hetnet["edges"] if metaedge_of(e) in metaedges]
-    # Keep only the nodes those edges touch, so the rest of the hetnet does not
-    # come along as isolated nodes.
     touched = {tuple(e["source_id"]) for e in edges} | {tuple(e["target_id"]) for e in edges}
     nodes = [n for n in hetnet["nodes"] if (n["kind"], n["identifier"]) in touched]
 
@@ -99,8 +96,6 @@ def load_hetionet(metaedges=None, *, write_to_db=True):
         load_to_db(G)
     return G
 
-
-# --- networkx <-> Neo4j -------------------------------------------------------
 
 def write_nodes(session, G):
     groups = defaultdict(list)
@@ -125,8 +120,8 @@ def write_edges(session, G):
     for u, v, attrs in G.edges(data=True):
         key = (G.nodes[u]["kind"], attrs["kind"], G.nodes[v]["kind"])
         groups[key].append({
-            "src": u[1],   # source identifier
-            "tgt": v[1],   # target identifier
+            "src": u[1],
+            "tgt": v[1],
             "props": {k: val for k, val in attrs.items() if k != "kind"},
         })
 
@@ -138,19 +133,21 @@ def write_edges(session, G):
 
 
 def load_to_db(G):
-    """Mirror the graph into Neo4j: nodes first, then relationships."""
+    """Write the graph to Neo4j: nodes first, then relationships."""
     with get_driver() as driver, driver.session() as session:
         write_nodes(session, G)
         write_edges(session, G)
 
 
 def load_from_db():
-    """Read the graph back out of Neo4j — same shape as load_hetionet, much faster."""
+    """Read the graph from Neo4j (same shape as load_hetionet, but much faster).
+
+    Nodes are read first, otherwise add_edge would create endpoints without attributes.
+    """
     kinds = {reltype(kind): kind for _, kind, _ in selected_metaedges()}
 
     G = nx.MultiDiGraph()
     with get_driver() as driver, driver.session() as session:
-        # Nodes first, or add_edge creates the endpoints without attributes.
         for rec in session.run(query.FETCH_NODES):
             props = rec["props"]
             G.add_node((rec["kind"], props["identifier"]), kind=rec["kind"], **props)
@@ -179,7 +176,7 @@ def count_db():
 
 
 def clear_db():
-    """Delete every node and relationship. Destructive, not reversible."""
+    """Delete everything in the database."""
     with get_driver() as driver, driver.session() as session:
         session.run(query.DELETE_EDGES).consume()
         session.run(query.DELETE_NODES).consume()

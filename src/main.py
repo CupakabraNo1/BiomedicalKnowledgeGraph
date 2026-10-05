@@ -1,10 +1,3 @@
-"""Script equivalent of notebooks/bio_kg.ipynb.
-
-Runs the notebook's steps in order so the pipeline can be executed headlessly:
-
-    python -m src.main      # as a package module
-    python src/main.py      # directly, e.g. from an IDE run button
-"""
 import sys
 from collections import Counter
 from pathlib import Path
@@ -12,8 +5,6 @@ from pathlib import Path
 if __package__:
     from . import config, data
 else:
-    # Run as a plain script: src/ is on sys.path but the project root is not,
-    # so there is no parent package for a relative import to resolve against.
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from src import config, data
 

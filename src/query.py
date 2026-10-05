@@ -1,9 +1,3 @@
-"""Cypher queries used by data.py.
-
-Labels and relationship types cannot be passed as parameters in Cypher, so the
-queries that need one are functions; the rest are plain constants.
-"""
-
 AWAIT_INDEXES = "CALL db.awaitIndexes()"
 
 COUNT_NODES = "MATCH (n) RETURN count(n) AS count"
